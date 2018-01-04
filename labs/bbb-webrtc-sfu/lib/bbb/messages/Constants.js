@@ -31,6 +31,9 @@ const config = require('config');
         WEBSOCKET_MESAGE: "ws_message",
         GATEWAY_MESSAGE: "gateway_message",
 
+        // Message version
+        COMMON_MESSAGE_VERSION : config.get('common-message-version'),
+
         // Message identifiers 1x
         START_TRANSCODER_REQUEST: "start_transcoder_request_message",
         START_TRANSCODER_REPLY: "start_transcoder_reply_message",
