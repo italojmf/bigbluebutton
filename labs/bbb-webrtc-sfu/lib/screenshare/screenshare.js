@@ -271,24 +271,22 @@ module.exports = class Screenshare {
   _stopScreensharing() {
     let strm = Messaging.generateStopTranscoderRequestMessage(this._meetingId, this._meetingId);
 
-    this._BigBlueButtonGW.publish(strm, C.TO_BBB_TRANSCODE_SYSTEM_CHAN, function(error) {});
-
     // Interoperability between transcoder messages
-    let msg;
     switch (C.COMMON_MESSAGE_VERSION) {
       case "2.x":
-        msg["name"] = C.STOP_TRANSCODER_RESP_2x;
-        msg["meetingId"] = C.MEETING_ID_2x;
+        this._BigBlueButtonGW.once(C.STOP_TRANSCODER_RESP_2x, (payload) => {
+          let meetingId = payload[C.MEETING_ID_2x];
+          this._stopRtmpBroadcast(meetingId);
+        });
         break;
       default:
-        msg["name"] = C.STOP_TRANSCODER_REPLY;
-        msg["meetingId"] = C.MEETING_ID;
+        this._BigBlueButtonGW.once(C.STOP_TRANSCODER_REPLY, (payload) => {
+          let meetingId = payload[C.MEETING_ID];
+          this._stopRtmpBroadcast(meetingId);
+        });
     }
 
-    this._BigBlueButtonGW.once(msg["name"], (payload) => {
-      let meetingId = payload[msg["meetingId"]];
-      this._stopRtmpBroadcast(meetingId);
-    });
+    this._BigBlueButtonGW.publish(strm, C.TO_BBB_TRANSCODE_SYSTEM_CHAN, function(error) {});
   }
 
   _onRtpMediaFlowing() {
@@ -296,25 +294,24 @@ module.exports = class Screenshare {
     let strm = Messaging.generateStartTranscoderRequestMessage(this._meetingId, this._meetingId, this._rtpParams);
 
     // Interoperability between transcoder messages
-    let msg;
     switch (C.COMMON_MESSAGE_VERSION) {
       case "2.x":
-        msg["name"] = C.START_TRANSCODER_RESP_2x;
-        msg["meetingId"] = C.MEETING_ID_2x;
+        this._BigBlueButtonGW.once(C.START_TRANSCODER_RESP_2x, (payload) => {
+          let meetingId = payload[C.MEETING_ID_2x];
+          let output = payload[C.PARAMS].output;
+          this._startRtmpBroadcast(meetingId, output);
+        });
         break;
       default:
-        msg["name"] = C.START_TRANSCODER_REPLY;
-        msg["meetingId"] = C.MEETING_ID;
+        this._BigBlueButtonGW.once(C.START_TRANSCODER_REPLY, (payload) => {
+          let meetingId = payload[C.MEETING_ID];
+          let output = payload[C.PARAMS].output;
+          this._startRtmpBroadcast(meetingId, output);
+        });
     }
 
-    this._BigBlueButtonGW.once(msg["name"], (payload) => {
-      let meetingId = payload[msg["meetingId"]];
-      let output = payload[C.PARAMS].output;
-      this._startRtmpBroadcast(meetingId, output);
-    });
-
     this._BigBlueButtonGW.publish(strm, C.TO_BBB_TRANSCODE_SYSTEM_CHAN, function(error) {});
-  };
+  }
 
   _stopRtmpBroadcast (meetingId) {
     console.log("  [screenshare] _stopRtmpBroadcast for meeting => " + meetingId);
