@@ -334,6 +334,7 @@ module.exports = class Screenshare {
         default:
           this._BigBlueButtonGW.publish(dsrbstam, C.FROM_VOICE_CONF_SYSTEM_CHAN, function(error) {});
       }
+    }
   }
 
   _startRtmpBroadcast (meetingId, output) {
@@ -358,6 +359,7 @@ module.exports = class Screenshare {
         default:
           this._BigBlueButtonGW.publish(dsrbstam, C.FROM_VOICE_CONF_SYSTEM_CHAN, function(error) {});
       }
+    }
   }
 
   _onRtpMediaNotFlowing() {
