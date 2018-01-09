@@ -326,8 +326,14 @@ module.exports = class Screenshare {
           this._vh,
           timestamp
       );
-      this._BigBlueButtonGW.publish(dsrstom, C.FROM_VOICE_CONF_SYSTEM_CHAN, function(error) {});
-    }
+      // Interoperability between redis channel name
+      switch (C.COMMON_MESSAGE_VERSION) {
+        case "2.x":
+          this._BigBlueButtonGW.publish(dsrstom, C.FROM_VOICE_CONF_SYSTEM_CHAN_2x, function(error) {});
+          break;
+        default:
+          this._BigBlueButtonGW.publish(dsrbstam, C.FROM_VOICE_CONF_SYSTEM_CHAN, function(error) {});
+      }
   }
 
   _startRtmpBroadcast (meetingId, output) {
@@ -344,8 +350,14 @@ module.exports = class Screenshare {
           this._vh,
           timestamp
       );
-      this._BigBlueButtonGW.publish(dsrbstam, C.FROM_VOICE_CONF_SYSTEM_CHAN, function(error) {});
-    }
+      // Interoperability between redis channel name
+      switch (C.COMMON_MESSAGE_VERSION) {
+        case "2.x":
+          this._BigBlueButtonGW.publish(dsrbstam, C.FROM_VOICE_CONF_SYSTEM_CHAN_2x, function(error) {});
+          break;
+        default:
+          this._BigBlueButtonGW.publish(dsrbstam, C.FROM_VOICE_CONF_SYSTEM_CHAN, function(error) {});
+      }
   }
 
   _onRtpMediaNotFlowing() {

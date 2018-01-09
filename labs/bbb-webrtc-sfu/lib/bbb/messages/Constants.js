@@ -17,7 +17,8 @@ const config = require('config');
 
         // Redis channels
         FROM_BBB_TRANSCODE_SYSTEM_CHAN : "bigbluebutton:from-bbb-transcode:system",
-        FROM_VOICE_CONF_SYSTEM_CHAN: "from-voice-conf-redis-channel",
+        FROM_VOICE_CONF_SYSTEM_CHAN: "bigbluebutton:from-voice-conf:system",
+        FROM_VOICE_CONF_SYSTEM_CHAN_2x: "from-voice-conf-redis-channel",
         TO_BBB_TRANSCODE_SYSTEM_CHAN: "bigbluebutton:to-bbb-transcode:system",
         FROM_SCREENSHARE: config.get('from-screenshare'),
         TO_SCREENSHARE: config.get('to-screenshare'),
@@ -101,4 +102,3 @@ const config = require('config');
 }
 
 module.exports = Constants();
-
