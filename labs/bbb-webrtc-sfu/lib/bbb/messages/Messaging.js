@@ -56,12 +56,12 @@ Messaging.prototype.generateStopTranscoderRequestMessage =
 }
 
 Messaging.prototype.generateDeskShareRTMPBroadcastStartedEvent =
-  function(conferenceName, screenshareConf, streamUrl, vw, vh, timestamp) {
+  function(meetingId, screenshareConf, streamUrl, vw, vh, timestamp) {
   let stadrbem;
   switch (Constants.COMMON_MESSAGE_VERSION) {
     case "2.x":
       stadrbem = new ScreenshareRTMPBroadcastStartedEventMessage2x(
-          conferenceName,
+          screenshareConf,
           screenshareConf,
           streamUrl,
           vw,
@@ -71,7 +71,7 @@ Messaging.prototype.generateDeskShareRTMPBroadcastStartedEvent =
       break;
     default:
       stadrbem = new DeskShareRTMPBroadcastStartedEventMessage(
-          conferenceName,
+          meetingId,
           streamUrl,
           vw,
           vh,
@@ -82,12 +82,12 @@ Messaging.prototype.generateDeskShareRTMPBroadcastStartedEvent =
 }
 
 Messaging.prototype.generateDeskShareRTMPBroadcastStoppedEvent =
-  function(conferenceName, screenshareConf, streamUrl, vw, vh, timestamp) {
+  function(meetingId, screenshareConf, streamUrl, vw, vh, timestamp) {
   let stodrbem;
   switch (Constants.COMMON_MESSAGE_VERSION) {
     case "2.x":
       stodrbem = new ScreenshareRTMPBroadcastStoppedEventMessage2x(
-          conferenceName,
+          screenshareConf,
           screenshareConf,
           streamUrl,
           vw,
@@ -97,7 +97,7 @@ Messaging.prototype.generateDeskShareRTMPBroadcastStoppedEvent =
       break;
     default:
       stodrbem = new DeskShareRTMPBroadcastStoppedEventMessage(
-          conferenceName,
+          meetingId,
           streamUrl,
           vw,
           vh,

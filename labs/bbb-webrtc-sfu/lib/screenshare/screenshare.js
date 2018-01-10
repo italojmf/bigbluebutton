@@ -319,7 +319,7 @@ module.exports = class Screenshare {
       // TODO correctly assemble this timestamp
       let timestamp = now.format('hhmmss');
       let dsrstom = Messaging.generateDeskShareRTMPBroadcastStoppedEvent(
-          this._voiceBridge,
+          meetingId,
           this._voiceBridge,
           this._streamUrl,
           this._vw,
@@ -332,7 +332,7 @@ module.exports = class Screenshare {
           this._BigBlueButtonGW.publish(dsrstom, C.FROM_VOICE_CONF_SYSTEM_CHAN_2x, function(error) {});
           break;
         default:
-          this._BigBlueButtonGW.publish(dsrbstam, C.FROM_VOICE_CONF_SYSTEM_CHAN, function(error) {});
+          this._BigBlueButtonGW.publish(dsrstom, C.FROM_VOICE_CONF_SYSTEM_CHAN, function(error) {});
       }
     }
   }
@@ -344,7 +344,7 @@ module.exports = class Screenshare {
       let timestamp = now.format('hhmmss');
       this._streamUrl = MediaHandler.generateStreamUrl(localIpAddress, meetingId, output);
       let dsrbstam = Messaging.generateDeskShareRTMPBroadcastStartedEvent(
-          this._voiceBridge,
+          meetingId,
           this._voiceBridge,
           this._streamUrl,
           this._vw,
