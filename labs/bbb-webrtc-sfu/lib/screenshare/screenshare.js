@@ -273,15 +273,15 @@ module.exports = class Screenshare {
 
     // Interoperability between transcoder messages
     switch (C.COMMON_MESSAGE_VERSION) {
-      case "2.x":
-        this._BigBlueButtonGW.once(C.STOP_TRANSCODER_RESP_2x, (payload) => {
-          let meetingId = payload[C.MEETING_ID_2x];
+      case "1.x":
+        this._BigBlueButtonGW.once(C.STOP_TRANSCODER_REPLY, (payload) => {
+          let meetingId = payload[C.MEETING_ID];
           this._stopRtmpBroadcast(meetingId);
         });
         break;
       default:
-        this._BigBlueButtonGW.once(C.STOP_TRANSCODER_REPLY, (payload) => {
-          let meetingId = payload[C.MEETING_ID];
+        this._BigBlueButtonGW.once(C.STOP_TRANSCODER_RESP_2x, (payload) => {
+          let meetingId = payload[C.MEETING_ID_2x];
           this._stopRtmpBroadcast(meetingId);
         });
     }
@@ -295,16 +295,16 @@ module.exports = class Screenshare {
 
     // Interoperability between transcoder messages
     switch (C.COMMON_MESSAGE_VERSION) {
-      case "2.x":
-        this._BigBlueButtonGW.once(C.START_TRANSCODER_RESP_2x, (payload) => {
-          let meetingId = payload[C.MEETING_ID_2x];
+      case "1.x":
+        this._BigBlueButtonGW.once(C.START_TRANSCODER_REPLY, (payload) => {
+          let meetingId = payload[C.MEETING_ID];
           let output = payload[C.PARAMS].output;
           this._startRtmpBroadcast(meetingId, output);
         });
         break;
       default:
-        this._BigBlueButtonGW.once(C.START_TRANSCODER_REPLY, (payload) => {
-          let meetingId = payload[C.MEETING_ID];
+        this._BigBlueButtonGW.once(C.START_TRANSCODER_RESP_2x, (payload) => {
+          let meetingId = payload[C.MEETING_ID_2x];
           let output = payload[C.PARAMS].output;
           this._startRtmpBroadcast(meetingId, output);
         });
@@ -328,11 +328,11 @@ module.exports = class Screenshare {
       );
       // Interoperability between redis channel name
       switch (C.COMMON_MESSAGE_VERSION) {
-        case "2.x":
-          this._BigBlueButtonGW.publish(dsrstom, C.FROM_VOICE_CONF_SYSTEM_CHAN_2x, function(error) {});
+        case "1.x":
+          this._BigBlueButtonGW.publish(dsrstom, C.FROM_VOICE_CONF_SYSTEM_CHAN, function(error) {});
           break;
         default:
-          this._BigBlueButtonGW.publish(dsrstom, C.FROM_VOICE_CONF_SYSTEM_CHAN, function(error) {});
+          this._BigBlueButtonGW.publish(dsrstom, C.FROM_VOICE_CONF_SYSTEM_CHAN_2x, function(error) {});
       }
     }
   }
@@ -353,11 +353,11 @@ module.exports = class Screenshare {
       );
       // Interoperability between redis channel name
       switch (C.COMMON_MESSAGE_VERSION) {
-        case "2.x":
-          this._BigBlueButtonGW.publish(dsrbstam, C.FROM_VOICE_CONF_SYSTEM_CHAN_2x, function(error) {});
+        case "1.x":
+          this._BigBlueButtonGW.publish(dsrbstam, C.FROM_VOICE_CONF_SYSTEM_CHAN, function(error) {});
           break;
         default:
-          this._BigBlueButtonGW.publish(dsrbstam, C.FROM_VOICE_CONF_SYSTEM_CHAN, function(error) {});
+          this._BigBlueButtonGW.publish(dsrbstam, C.FROM_VOICE_CONF_SYSTEM_CHAN_2x, function(error) {});
       }
     }
   }
