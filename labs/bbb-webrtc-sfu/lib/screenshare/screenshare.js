@@ -271,52 +271,69 @@ module.exports = class Screenshare {
   _stopScreensharing() {
     let strm = Messaging.generateStopTranscoderRequestMessage(this._meetingId, this._meetingId);
 
+    // Interoperability between transcoder messages
+    switch (C.COMMON_MESSAGE_VERSION) {
+      case "2.x":
+        this._BigBlueButtonGW.once(C.STOP_TRANSCODER_RESP_2x, (payload) => {
+          let meetingId = payload[C.MEETING_ID_2x];
+          this._stopRtmpBroadcast(meetingId);
+        });
+        break;
+      default:
+        this._BigBlueButtonGW.once(C.STOP_TRANSCODER_REPLY, (payload) => {
+          let meetingId = payload[C.MEETING_ID];
+          this._stopRtmpBroadcast(meetingId);
+        });
+    }
+
     this._BigBlueButtonGW.publish(strm, C.TO_BBB_TRANSCODE_SYSTEM_CHAN, function(error) {});
-
-    // Interoperability: capturing 1.1 stop_transcoder_reply messages
-    this._BigBlueButtonGW.once(C.STOP_TRANSCODER_REPLY, (payload) => {
-      let meetingId = payload[C.MEETING_ID];
-      this._stopRtmpBroadcast(meetingId);
-    });
-
-    // Capturing stop transcoder responses from the 2x model
-    this._BigBlueButtonGW.once(C.STOP_TRANSCODER_RESP_2x, (payload) => {
-      let meetingId = payload[C.MEETING_ID_2x];
-      this._stopRtmpBroadcast(meetingId);
-    });
-
   }
 
   _onRtpMediaFlowing() {
     console.log("  [screenshare] Media FLOWING for meeting => " + this._meetingId);
     let strm = Messaging.generateStartTranscoderRequestMessage(this._meetingId, this._meetingId, this._rtpParams);
 
-    // Interoperability: capturing 1.1 start_transcoder_reply messages
-    this._BigBlueButtonGW.once(C.START_TRANSCODER_REPLY, (payload) => {
-      let meetingId = payload[C.MEETING_ID];
-      let output = payload["params"].output;
-      this._startRtmpBroadcast(meetingId, output);
-    });
-
-    // Capturing stop transcoder responses from the 2x model
-    this._BigBlueButtonGW.once(C.START_TRANSCODER_RESP_2x, (payload) => {
-      let meetingId = payload[C.MEETING_ID_2x];
-      let output = payload["params"].output;
-      this._startRtmpBroadcast(meetingId, output);
-    });
-
+    // Interoperability between transcoder messages
+    switch (C.COMMON_MESSAGE_VERSION) {
+      case "2.x":
+        this._BigBlueButtonGW.once(C.START_TRANSCODER_RESP_2x, (payload) => {
+          let meetingId = payload[C.MEETING_ID_2x];
+          let output = payload[C.PARAMS].output;
+          this._startRtmpBroadcast(meetingId, output);
+        });
+        break;
+      default:
+        this._BigBlueButtonGW.once(C.START_TRANSCODER_REPLY, (payload) => {
+          let meetingId = payload[C.MEETING_ID];
+          let output = payload[C.PARAMS].output;
+          this._startRtmpBroadcast(meetingId, output);
+        });
+    }
 
     this._BigBlueButtonGW.publish(strm, C.TO_BBB_TRANSCODE_SYSTEM_CHAN, function(error) {});
-  };
+  }
 
   _stopRtmpBroadcast (meetingId) {
     console.log("  [screenshare] _stopRtmpBroadcast for meeting => " + meetingId);
     if(this._meetingId === meetingId) {
       // TODO correctly assemble this timestamp
       let timestamp = now.format('hhmmss');
-      let dsrstom = Messaging.generateScreenshareRTMPBroadcastStoppedEvent2x(this._voiceBridge,
-          this._voiceBridge, this._streamUrl, this._vw, this._vh, timestamp);
-      this._BigBlueButtonGW.publish(dsrstom, C.FROM_VOICE_CONF_SYSTEM_CHAN, function(error) {});
+      let dsrstom = Messaging.generateDeskShareRTMPBroadcastStoppedEvent(
+          meetingId,
+          this._voiceBridge,
+          this._streamUrl,
+          this._vw,
+          this._vh,
+          timestamp
+      );
+      // Interoperability between redis channel name
+      switch (C.COMMON_MESSAGE_VERSION) {
+        case "2.x":
+          this._BigBlueButtonGW.publish(dsrstom, C.FROM_VOICE_CONF_SYSTEM_CHAN_2x, function(error) {});
+          break;
+        default:
+          this._BigBlueButtonGW.publish(dsrstom, C.FROM_VOICE_CONF_SYSTEM_CHAN, function(error) {});
+      }
     }
   }
 
@@ -326,10 +343,22 @@ module.exports = class Screenshare {
       // TODO correctly assemble this timestamp
       let timestamp = now.format('hhmmss');
       this._streamUrl = MediaHandler.generateStreamUrl(localIpAddress, meetingId, output);
-      let dsrbstam = Messaging.generateScreenshareRTMPBroadcastStartedEvent2x(this._voiceBridge,
-          this._voiceBridge, this._streamUrl, this._vw, this._vh, timestamp);
-
-      this._BigBlueButtonGW.publish(dsrbstam, C.FROM_VOICE_CONF_SYSTEM_CHAN, function(error) {});
+      let dsrbstam = Messaging.generateDeskShareRTMPBroadcastStartedEvent(
+          meetingId,
+          this._voiceBridge,
+          this._streamUrl,
+          this._vw,
+          this._vh,
+          timestamp
+      );
+      // Interoperability between redis channel name
+      switch (C.COMMON_MESSAGE_VERSION) {
+        case "2.x":
+          this._BigBlueButtonGW.publish(dsrbstam, C.FROM_VOICE_CONF_SYSTEM_CHAN_2x, function(error) {});
+          break;
+        default:
+          this._BigBlueButtonGW.publish(dsrbstam, C.FROM_VOICE_CONF_SYSTEM_CHAN, function(error) {});
+      }
     }
   }
 
