@@ -1,7 +1,7 @@
 /**
  * BigBlueButton open source conferencing system - http://www.bigbluebutton.org/
  *
- * Copyright (c) 2015 BigBlueButton Inc. and by respective authors (see below).
+ * Copyright (c) 2018 BigBlueButton Inc. and by respective authors (see below).
  *
  * This program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License as published by the Free Software
@@ -16,16 +16,24 @@
  * with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
  *
  */
-package org.bigbluebutton.main.model.options {
-	import org.bigbluebutton.core.Options;
 
-	public class MeetingOptions extends Options {
+package org.bigbluebutton.core.record.events;
 
-		[Bindable]
-		public var muteOnStart:Boolean = false;
+class WebcamsOnlyForModeratorRecordEvent extends AbstractParticipantRecordEvent {
+  import WebcamsOnlyForModeratorRecordEvent._
 
-		public function MeetingOptions() {
-			name = "meeting";
-		}
-	}
+  setEvent("WebcamsOnlyForModeratorEvent")
+
+  def setUserId(userId: String) {
+    eventMap.put(USER_ID, userId)
+  }
+
+  def setWebacmsOnlyForModerator(webacmsOnlyForModerator: Boolean) {
+    eventMap.put(WEBCAMS_ONLY_FOR_MODERATOR, webacmsOnlyForModerator.toString)
+  }
+}
+
+object WebcamsOnlyForModeratorRecordEvent {
+  protected final val USER_ID = "userId"
+  protected final val WEBCAMS_ONLY_FOR_MODERATOR = "webacmsOnlyForModerator"
 }

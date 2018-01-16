@@ -1,7 +1,7 @@
 import React from 'react';
-import { createContainer } from 'meteor/react-meteor-data';
+import PropTypes from 'prop-types';
 import Button from '/imports/ui/components/button/component';
-import { defineMessages, injectIntl } from 'react-intl';
+import { defineMessages, injectIntl, intlShape } from 'react-intl';
 
 const intlMessages = defineMessages({
   joinVideo: {
@@ -55,6 +55,6 @@ class JoinVideoOptions extends React.Component {
       />
     );
   }
-}
+};
 
 export default injectIntl(JoinVideoOptions);

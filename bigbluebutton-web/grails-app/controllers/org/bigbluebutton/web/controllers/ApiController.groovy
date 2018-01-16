@@ -1373,13 +1373,13 @@ class ApiController {
               isBreakout = meeting.isBreakout()
               logoutTimer = meeting.getLogoutTimer()
               allowStartStopRecording = meeting.getAllowStartStopRecording()
-              webcamsOnlyForModerator = meeting.getWebcamsOnlyForModerator()
               welcome = us.welcome
               if (! StringUtils.isEmpty(meeting.moderatorOnlyMessage))
                 modOnlyMessage = meeting.moderatorOnlyMessage
 
               customLogoURL = meeting.getCustomLogoURL()
               customCopyright = meeting.getCustomCopyright()
+              muteOnStart = meeting.getMuteOnStart()
               logoutUrl = us.logoutUrl
               defaultLayout = us.defaultLayout
               avatarURL = us.avatarURL
