@@ -1,7 +1,7 @@
 import { Tracker } from 'meteor/tracker';
 import { makeCall } from '/imports/ui/services/api';
 import Users from '/imports/api/users';
-import { createContainer } from 'meteor/react-meteor-data';
+import Auth from '/imports/ui/services/auth';
 
 class VideoService {
   constructor() {
@@ -77,6 +77,10 @@ class VideoService {
     return Users.find().fetch();
   }
 
+  userId() {
+    return Auth.userID;
+  }
+
   isConnected() {
     return this.isConnected;
   }
@@ -87,6 +91,7 @@ class VideoService {
 }
 
 const videoService = new VideoService();
+
 export default {
   exitVideo: () => videoService.exitVideo(),
   exitingVideo: () => videoService.exitingVideo(),
@@ -98,6 +103,7 @@ export default {
   joiningVideo: () => videoService.joiningVideo(),
   joinedVideo: () => videoService.joinedVideo(),
   resetState: () => videoService.resetState(),
-  sendUserShareWebcam: () => videoService.sendUserShareWebcam(),
-  sendUserUnshareWebcam: () => videoService.sendUserUnshareWebcam(),
+  sendUserShareWebcam: (stream) => videoService.sendUserShareWebcam(stream),
+  sendUserUnshareWebcam: (stream) => videoService.sendUserUnshareWebcam(stream),
+  userId: () => videoService.userId(),
 };

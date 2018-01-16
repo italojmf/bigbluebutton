@@ -1,12 +1,9 @@
 import React, { Component } from 'react';
-import ScreenshareContainer from '/imports/ui/components/screenshare/container';
-import styles from './styles';
-
+import { styles } from './styles';
 import { defineMessages, injectIntl } from 'react-intl';
+import VideoService from './service';
 import { log } from '/imports/ui/services/api';
 import { notify } from '/imports/ui/services/notification';
-
-import VideoService from './service';
 import { toast } from 'react-toastify';
 import Toast from '/imports/ui/components/toast/component';
 
@@ -65,9 +62,6 @@ class VideoDock extends Component {
       sharedWebcam : false,
     };
 
-    this.sendUserShareWebcam = props.sendUserShareWebcam.bind(this);
-    this.sendUserUnshareWebcam = props.sendUserUnshareWebcam.bind(this);
-
     this.unshareWebcam = this.unshareWebcam.bind(this);
     this.shareWebcam = this.shareWebcam.bind(this);
 
@@ -107,11 +101,10 @@ class VideoDock extends Component {
 
   componentDidMount() {
     const ws = this.ws;
-    const { users } = this.props;
-    const id = users[0].userId;
+    const { users, userId } = this.props;
 
     for (let i = 0; i < users.length; i++) {
-      if (users[i].has_stream && users[i].userId !== id) {
+      if (users[i].has_stream && users[i].userId !== userId) {
         this.start(users[i].userId, false);
       }
     }
@@ -137,7 +130,6 @@ class VideoDock extends Component {
     document.removeEventListener('joinVideo', this.shareWebcam);
     document.removeEventListener('exitVideo', this.unshareWebcam);
     document.removeEventListener('installChromeExtension', this.installChromeExtension);
-
     window.removeEventListener('resize', this.adjustVideos);
 
     this.ws.removeEventListener('message', this.onWsMessage);
@@ -355,10 +347,10 @@ class VideoDock extends Component {
   }
 
   stop(id) {
-    const { users } = this.props;
+    const { userId } = this.props;
     this.sendMessage({
       type: 'video',
-      role: id == users[0].userId ? 'share' : 'viewer',
+      role: id == userId ? 'share' : 'viewer',
       id: 'stop',
       cameraId: id,
     });
@@ -404,11 +396,10 @@ class VideoDock extends Component {
   }
 
   shareWebcam() {
-    const { users } = this.props;
-    const id = users[0].userId;
+    const { users, userId } = this.props;
 
     if (this.connectedToMediaServer()) {
-      this.start(id, true);
+      this.start(userId, true);
     } else {
       log("error", "Not connected to media server");
     }
@@ -417,9 +408,8 @@ class VideoDock extends Component {
   unshareWebcam() {
     VideoService.exitingVideo();
     log('info', 'Unsharing webcam');
-    const { users } = this.props;
-    const id = users[0].userId;
-    this.sendUserUnshareWebcam(id);
+    const { userId } = this.props;
+    VideoService.sendUserUnshareWebcam(userId);
     VideoService.exitedVideo();
   }
 
@@ -444,8 +434,8 @@ class VideoDock extends Component {
       }
     });
 
-    if (users[0].userId == message.cameraId) {
-      this.sendUserShareWebcam(id);
+    if (message.cameraId == this.props.userId) {
+      VideoService.sendUserShareWebcam(id);
     }
   }
 
@@ -482,7 +472,7 @@ class VideoDock extends Component {
 
     const { users } = this.props;
 
-    if (message.cameraId == users[0].userId) {
+    if (message.cameraId == this.props) {
       this.unshareWebcam();
     } else {
       this.stop(message.cameraId);
@@ -492,9 +482,7 @@ class VideoDock extends Component {
   handlePlayStart(message) {
     log('info', 'Handle play start <===================');
 
-    const { users } = this.props;
-
-    if (message.cameraId == users[0].userId) {
+    if (message.cameraId == this.props.userId) {
       VideoService.joinedVideo();
     }
   }
@@ -545,9 +533,8 @@ class VideoDock extends Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    const { users } = this.props;
+    const { users, userId } = this.props;
     const nextUsers = nextProps.users;
-    const id = users[0].userId;
 
     if (users) {
       let suc = false;
@@ -559,7 +546,7 @@ class VideoDock extends Component {
             console.log(`User ${nextUsers[i].has_stream ? '' : 'un'}shared webcam ${users[i].userId}`);
 
             if (nextUsers[i].has_stream) {
-              if (id !== users[i].userId) {
+              if (userId !== users[i].userId) {
                 this.start(users[i].userId, false);
               }
             } else {
