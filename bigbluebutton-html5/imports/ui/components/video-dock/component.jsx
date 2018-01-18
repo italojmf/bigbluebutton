@@ -288,7 +288,9 @@ class VideoDock extends Component {
 
         that.destroyWebRTCPeer(id);
         that.destroyVideoTag(id);
-        VideoService.resetState();
+        if (shareWebcam) {
+          VideoService.resetState();
+        }
         return log('error', error);
       }
 
@@ -415,6 +417,7 @@ class VideoDock extends Component {
   }
 
   startResponse(message) {
+    const { users } = this.props;
     const id = message.cameraId;
     const webRtcPeer = this.webRtcPeers[id];
 
@@ -435,7 +438,6 @@ class VideoDock extends Component {
     });
 
     if (message.cameraId == this.props.userId) {
-      log('info', "camera id sendusershare ", id);
       VideoService.sendUserShareWebcam(id);
     }
   }
