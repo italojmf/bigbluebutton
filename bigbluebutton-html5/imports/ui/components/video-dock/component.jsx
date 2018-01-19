@@ -105,7 +105,12 @@ class VideoDock extends Component {
 
     users.forEach((user) => {
       if (user.has_stream && user.userId !== userId) {
-        this.start(user.userId, false);
+        // FIX: Really ugly hack, but sometimes the ICE candidates aren't
+        // generated properly when we send videos right after componentDidMount
+        // lfzawacki 01/17/2018
+        setTimeout(() => {
+          this.start(user.userId, false);
+        }, 2000);
       }
     })
 
