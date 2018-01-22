@@ -28,7 +28,7 @@ if (config.get('acceptSelfSignedCertificate')) {
 }
 
 module.exports = class Screenshare {
-  constructor(id, bbbgw, voiceBridge, caller = 'caller', vh, vw, meetingId) {
+  constructor(id, bbbgw, voiceBridge, caller = 'caller', vh, vw, meetingId, streamId) {
     this.mcs = new MCSApi();
     this._id = id;
     this._BigBlueButtonGW = bbbgw;
@@ -36,6 +36,7 @@ module.exports = class Screenshare {
     this._ffmpegEndpoint = null;
     this._voiceBridge = voiceBridge;
     this._meetingId = meetingId;
+    this._streamId = streamId;
     this._caller = caller;
     this._streamUrl = "";
     this._vw = vw;
@@ -177,7 +178,7 @@ module.exports = class Screenshare {
 
       let recvVideoPort = retRtp.answer.match(/m=video\s(\d*)/)[1];
       this._rtpParams = MediaHandler.generateTranscoderParams(kurentoIp, localIpAddress,
-          sendVideoPort, recvVideoPort, this._meetingId, "stream_type_video", C.RTP_TO_RTMP, "copy", this._caller, this._voiceBridge);
+          sendVideoPort, recvVideoPort, this._streamId, "stream_type_deskshare", C.RTP_TO_RTMP, "copy", this._caller, this._voiceBridge);
 
       this.mcs.on('MediaEvent' + this._ffmpegEndpoint, this.mediaStateRtp.bind(this));
 
@@ -273,15 +274,15 @@ module.exports = class Screenshare {
 
     // Interoperability between transcoder messages
     switch (C.COMMON_MESSAGE_VERSION) {
-      case "2.x":
-        this._BigBlueButtonGW.once(C.STOP_TRANSCODER_RESP_2x, (payload) => {
-          let meetingId = payload[C.MEETING_ID_2x];
+      case "1.x":
+        this._BigBlueButtonGW.once(C.STOP_TRANSCODER_REPLY, (payload) => {
+          let meetingId = payload[C.MEETING_ID];
           this._stopRtmpBroadcast(meetingId);
         });
         break;
       default:
-        this._BigBlueButtonGW.once(C.STOP_TRANSCODER_REPLY, (payload) => {
-          let meetingId = payload[C.MEETING_ID];
+        this._BigBlueButtonGW.once(C.STOP_TRANSCODER_RESP_2x, (payload) => {
+          let meetingId = payload[C.MEETING_ID_2x];
           this._stopRtmpBroadcast(meetingId);
         });
     }
@@ -295,16 +296,16 @@ module.exports = class Screenshare {
 
     // Interoperability between transcoder messages
     switch (C.COMMON_MESSAGE_VERSION) {
-      case "2.x":
-        this._BigBlueButtonGW.once(C.START_TRANSCODER_RESP_2x, (payload) => {
-          let meetingId = payload[C.MEETING_ID_2x];
+      case "1.x":
+        this._BigBlueButtonGW.once(C.START_TRANSCODER_REPLY, (payload) => {
+          let meetingId = payload[C.MEETING_ID];
           let output = payload[C.PARAMS].output;
           this._startRtmpBroadcast(meetingId, output);
         });
         break;
       default:
-        this._BigBlueButtonGW.once(C.START_TRANSCODER_REPLY, (payload) => {
-          let meetingId = payload[C.MEETING_ID];
+        this._BigBlueButtonGW.once(C.START_TRANSCODER_RESP_2x, (payload) => {
+          let meetingId = payload[C.MEETING_ID_2x];
           let output = payload[C.PARAMS].output;
           this._startRtmpBroadcast(meetingId, output);
         });
@@ -316,23 +317,27 @@ module.exports = class Screenshare {
   _stopRtmpBroadcast (meetingId) {
     console.log("  [screenshare] _stopRtmpBroadcast for meeting => " + meetingId);
     if(this._meetingId === meetingId) {
-      // TODO correctly assemble this timestamp
-      let timestamp = now.format('hhmmss');
-      let dsrstom = Messaging.generateDeskShareRTMPBroadcastStoppedEvent(
-          meetingId,
-          this._voiceBridge,
-          this._streamUrl,
-          this._vw,
-          this._vh,
-          timestamp
-      );
-      // Interoperability between redis channel name
       switch (C.COMMON_MESSAGE_VERSION) {
-        case "2.x":
-          this._BigBlueButtonGW.publish(dsrstom, C.FROM_VOICE_CONF_SYSTEM_CHAN_2x, function(error) {});
+        case "1.x":
+          this._BigBlueButtonGW.publish(JSON.stringify({
+              connectionId: this._id,
+              id: "webRTCScreenshareStopped",
+              meetingId: meetingId,
+              streamId: this._streamId
+          }), C.FROM_SCREENSHARE);
           break;
         default:
-          this._BigBlueButtonGW.publish(dsrstom, C.FROM_VOICE_CONF_SYSTEM_CHAN, function(error) {});
+          // TODO correctly assemble this timestamp
+          let timestamp = now.format('hhmmss');
+          let dsrstom = Messaging.generateDeskShareRTMPBroadcastStoppedEvent(
+              meetingId,
+              this._voiceBridge,
+              this._streamUrl,
+              this._vw,
+              this._vh,
+              timestamp
+          );
+          this._BigBlueButtonGW.publish(dsrstom, C.FROM_VOICE_CONF_SYSTEM_CHAN_2x, function(error) {});
       }
     }
   }
@@ -340,24 +345,31 @@ module.exports = class Screenshare {
   _startRtmpBroadcast (meetingId, output) {
     console.log("  [screenshare] _startRtmpBroadcast for meeting => " + meetingId);
     if(this._meetingId === meetingId) {
-      // TODO correctly assemble this timestamp
-      let timestamp = now.format('hhmmss');
-      this._streamUrl = MediaHandler.generateStreamUrl(localIpAddress, meetingId, output);
-      let dsrbstam = Messaging.generateDeskShareRTMPBroadcastStartedEvent(
-          meetingId,
-          this._voiceBridge,
-          this._streamUrl,
-          this._vw,
-          this._vh,
-          timestamp
-      );
       // Interoperability between redis channel name
       switch (C.COMMON_MESSAGE_VERSION) {
-        case "2.x":
-          this._BigBlueButtonGW.publish(dsrbstam, C.FROM_VOICE_CONF_SYSTEM_CHAN_2x, function(error) {});
+        case "1.x":
+          this._BigBlueButtonGW.publish(JSON.stringify({
+              connectionId: this._id,
+              id: "webRTCScreenshareStarted",
+              meetingId: meetingId,
+              streamId: this._streamId,
+              width: this._vw,
+              height: this._vh
+          }), C.FROM_SCREENSHARE);
           break;
         default:
-          this._BigBlueButtonGW.publish(dsrbstam, C.FROM_VOICE_CONF_SYSTEM_CHAN, function(error) {});
+          // TODO correctly assemble this timestamp
+          let timestamp = now.format('hhmmss');
+          this._streamUrl = MediaHandler.generateStreamUrl(localIpAddress, meetingId, output);
+          let dsrbstam = Messaging.generateDeskShareRTMPBroadcastStartedEvent(
+              meetingId,
+              this._voiceBridge,
+              this._streamUrl,
+              this._vw,
+              this._vh,
+              timestamp
+          );
+          this._BigBlueButtonGW.publish(dsrbstam, C.FROM_VOICE_CONF_SYSTEM_CHAN_2x, function(error) {});
       }
     }
   }
