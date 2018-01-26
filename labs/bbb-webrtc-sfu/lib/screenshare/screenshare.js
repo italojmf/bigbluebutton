@@ -18,6 +18,7 @@ const MCSApi = require('../mcs-core/lib/media/MCSApiStub');
 const config = require('config');
 const kurentoIp = config.get('kurentoIp');
 const localIpAddress = config.get('localIpAddress');
+const mediaFlowTimeoutDuration = config.get('mediaFlowTimeoutDuration');
 
 // Global stuff
 var sharedScreens = {};
@@ -44,6 +45,7 @@ module.exports = class Screenshare {
     this._presenterCandidatesQueue = [];
     this._viewersEndpoint = [];
     this._viewersCandidatesQueue = [];
+    this._mediaFlowingTimeout = null;
   }
 
   onIceCandidate (_candidate) {
@@ -74,6 +76,23 @@ module.exports = class Screenshare {
       }
     }
   }
+
+  setMediaFlowingTimeout() {
+    if (!this._mediaFlowingTimeout) {
+      this._mediaFlowingTimeout = setTimeout(() => {
+            this._onRtpMediaNotFlowing();
+          },
+          mediaFlowTimeoutDuration
+      );
+    }
+  };
+
+  clearMediaFlowingTimeout() {
+    if (this._mediaFlowingTimeout) {
+      clearTimeout(this._mediaFlowingTimeout);
+      this._mediaFlowingTimeout = null;
+    }
+  };
 
   mediaStateRtp (event) {
     let msEvent = event.event;
@@ -154,6 +173,7 @@ module.exports = class Screenshare {
       sharedScreens[id] = this._presenterEndpoint;
       presenterSdpAnswer = retSource.answer;
       this.flushCandidatesQueue(this._presenterEndpoint, this._presenterCandidatesQueue);
+      this.setMediaFlowingTimeout();
 
       this.mcs.on('MediaEvent' + this._presenterEndpoint, (event) => {
         this.mediaStateWebRtc(event, this._id)
@@ -292,6 +312,7 @@ module.exports = class Screenshare {
 
   _onRtpMediaFlowing() {
     console.log("  [screenshare] Media FLOWING for meeting => " + this._meetingId);
+    this.clearMediaFlowingTimeout();
     let strm = Messaging.generateStartTranscoderRequestMessage(this._meetingId, this._meetingId, this._rtpParams);
 
     // Interoperability between transcoder messages
@@ -375,7 +396,21 @@ module.exports = class Screenshare {
   }
 
   _onRtpMediaNotFlowing() {
-    console.log("  [screenshare] TODO RTP NOT_FLOWING");
+    console.log("  [screenshare] Media NOT FLOWING for meeting => " + this._meetingId);
+    // Interoperability between transcoder messages
+    switch (C.COMMON_MESSAGE_VERSION) {
+      case "1.x":
+          this._BigBlueButtonGW.publish(JSON.stringify({
+              connectionId: this._id,
+              id: "webRTCScreenshareError",
+              error: C.MEDIA_ERROR
+          }), C.FROM_SCREENSHARE);
+          // TODO Change this when 2.x routine is done
+          this._stop();
+        break;
+      default:
+        console.log("  [screenshare] TODO RTP NOT_FLOWING");
+    }
   }
 
   async stopViewer(id) {
