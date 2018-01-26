@@ -32,6 +32,9 @@ const config = require('config');
         WEBSOCKET_MESAGE: "ws_message",
         GATEWAY_MESSAGE: "gateway_message",
 
+        // Errors
+        MEDIA_ERROR: "MEDIA_ERROR",
+
         // Message version
         COMMON_MESSAGE_VERSION : config.get('common-message-version'),
 
